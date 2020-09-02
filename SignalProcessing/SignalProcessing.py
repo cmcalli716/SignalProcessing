@@ -18,13 +18,14 @@ def baseline_als_optimized(y, lam, p, niter=10):
 
     Output: baseline as a z axis
     -------------------------------------------------------------------------"""
+    # Defining parameters and matrix for smoothing
     L = len(y)
     D = sparse.diags([1,-2,1],[0,-1,-2], shape=(L,L-2))
-    D = lam * D.dot(D.transpose()) # Precompute this term since it does not depend on `w`
+    D = lam * D.dot(D.transpose())
     w = np.ones(L)
     W = sparse.spdiags(w, 0, L, L)
     for i in range(niter):
-        W.setdiag(w) # Do not create a new matrix, just update diagonal values
+        W.setdiag(w)
         Z = W + D
         z = spsolve(Z, w*y)
         w = p * (y > z) + (1-p) * (y < z)
@@ -43,7 +44,7 @@ def peak_detector(file, SNR, wval, gain_adj, zoom = False):
     the highest density of detected peaks.
 
     Output: number of peaks, frequency, and average half-width are
-    read out to screen; array of peak indices is output as well as baseline;
+    read out to screen; array of peak indices is output;
     optional: plot zoomed to show interval of highest peak density
     -------------------------------------------------------------------------"""
     # Loading file into a dataframe
@@ -51,7 +52,7 @@ def peak_detector(file, SNR, wval, gain_adj, zoom = False):
     # Gain adjustment
     df['gain_adj_y'] = df[1] * gain_adj
     # Finding Baseline
-    bline = baseline_als_optimized(df['gain_adj_y'], 10e7, 0.001)
+    bline = baseline_als_optimized(df['gain_adj_y'], 10e9, 0.001)
     # Setting height threshold based on desired S/N Ratio
     hthresh = bline + SNR * df['gain_adj_y'].std()
     # Using scipy.signal.find_peaks() to analyze current data
@@ -63,6 +64,7 @@ def peak_detector(file, SNR, wval, gain_adj, zoom = False):
     peak_indices = peaks[0]
     # Finding average peak height
     av_ph = np.mean(ycoords)
+    std_ph = np.std(ycoords)
     # Calculate number of peaks
     npeaks = len(xcoords)
     freq = npeaks/(np.max(df[0]) - np.min(df[0]))
@@ -93,7 +95,7 @@ def peak_detector(file, SNR, wval, gain_adj, zoom = False):
 
     print("\nTotal number of detected peaks: " + str(npeaks))
     print('\nFrequency of peaks (Hz): ' + str(freq))
-    print("\nAverage peak height (pA): " + str(av_ph))
+    print("\nAverage peak height (pA): " + str(av_ph) + ' SD: ' + str(std_ph))
     return [npeaks, freq, peak_indices, df['gain_adj_y'], bline]
 
 
@@ -116,7 +118,8 @@ def find_half_widths(file, SNR, wval, gain_adj):
     # Adjust halfwidths to ms time scale
     halfwidths = hws * 0.01
     av_hw = np.mean(halfwidths)
-    print("\nAverage Half-width (ms): " + str(av_hw))
+    std_hw = np.std(halfwidths)
+    print("\nAverage Half-width (ms): " + str(av_hw) + ' SD: ' + str(std_hw))
     return halfwidths
 
 
@@ -165,11 +168,13 @@ def calc_peak_area(file, SNR, wval, gain_adj):
     peak_areas = np.where(peak_areas < 0, np.nan, peak_areas)
     # Computing average value
     av_pa = np.nanmean(peak_areas)
-    print("\nAverage peak area (fC): " + str(av_pa))
+    std_pa = np.nanstd(peak_areas)
+    print("\nAverage peak area (fC): " + str(av_pa)
+         + ' SD: ' + str(std_pa))
     return peak_areas
 
 
-def calc_particle_diameters(array, unit, metal):
+def calc_particle_rads(array, unit, metal):
     """Takes an array of calculated charges from an amperometric
     trace and estimates the radius based on the atomic mass and density
     of the given metal.
@@ -209,5 +214,5 @@ def calc_particle_diameters(array, unit, metal):
     av_rad = np.nanmean(rads)
     std_rads = np.nanstd(rads)
     print("Average estimated particle radius (nm): " + str(av_rad)
-         + ' +/- ' + str(std_rads))
+         + ' SD: ' + str(std_rads))
     return rads
