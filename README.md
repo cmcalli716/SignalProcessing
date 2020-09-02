@@ -6,7 +6,10 @@
 ## Repository Structure 
 ```
 |- README.md
+|- LICENSE
 |- SignalProcessing/
   |- SignalProcessing.py
+  |- Amperometry Signal Processing Software - Development Notebook.ipynb
 |- examples/
+  |- Group Meeting Presentation 9.3.20 - SignalProcessing.py Notebook Demo CTM.ipynb
 ```
