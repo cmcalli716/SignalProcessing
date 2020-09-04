@@ -174,7 +174,7 @@ def calc_peak_area(file, SNR, wval, gain_adj):
     return peak_areas
 
 
-def calc_particle_rads(array, unit, metal):
+def calc_percent_ox(array, unit, metal, true_diameter):
     """Takes an array of calculated charges from an amperometric
     trace and estimates the radius based on the atomic mass and density
     of the given metal.
@@ -215,4 +215,11 @@ def calc_particle_rads(array, unit, metal):
     std_rads = np.nanstd(rads)
     print("Average estimated particle radius (nm): " + str(av_rad)
          + ' SD: ' + str(std_rads))
-    return rads
+    # Calculating percent oxidation
+    true_rad = true_diameter/2
+    ox_arr = rads/true_rad
+    av_ox = np.nanmean(ox_arr) * 100
+    std_ox = np.nanstd(ox_arr) * 100
+    print("Average Percent Oxidation (%): " + str(av_ox)
+         + ' SD: ' + str(std_ox))
+    return rads, ox_arr
